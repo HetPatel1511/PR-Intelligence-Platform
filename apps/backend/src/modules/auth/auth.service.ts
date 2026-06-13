@@ -3,7 +3,7 @@ import type { User } from '@prisma/client';
 
 import { env } from '../../config/env.js';
 import { prisma } from '../../lib/prisma.js';
-import { encrypt } from '../../lib/crypto.js';
+import { decrypt, encrypt } from '../../lib/crypto.js';
 import { signToken } from '../../lib/jwt.js';
 import { HttpError } from '../../utils/http-error.js';
 import type { GitHubTokenResponse, GitHubUserProfile, SafeUser } from './auth.types.js';
@@ -100,6 +100,18 @@ export function issueToken(userId: string): string {
 
 export async function getUserById(id: string): Promise<User | null> {
   return prisma.user.findUnique({ where: { id } });
+}
+
+/**
+ * Decrypts and returns a user's stored GitHub access token for server-side API
+ * calls. Throws 401 if the user has no token (must re-authenticate).
+ */
+export async function getUserGitHubToken(userId: string): Promise<string> {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user?.accessToken) {
+    throw HttpError.unauthorized('GitHub token unavailable; please sign in again');
+  }
+  return decrypt(user.accessToken);
 }
 
 /** Strip secrets and serialize BigInt before sending a user to the client. */
