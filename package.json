@@ -1,0 +1,49 @@
+{
+  "name": "pr-intelligence-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pull Request Intelligence Platform — MVP monorepo (frontend + backend + shared types)",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,magenta \"npm run dev -w @pr/backend\" \"npm run dev -w @pr/frontend\"",
+    "dev:backend": "npm run dev -w @pr/backend",
+    "dev:frontend": "npm run dev -w @pr/frontend",
+    "build": "npm run build -w @pr/backend && npm run build -w @pr/frontend",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,cjs,mjs,json,md,css,html}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,cjs,mjs,json,md,css,html}\"",
+    "typecheck": "npm run typecheck -w @pr/backend && npm run typecheck -w @pr/frontend",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "concurrently": "^9.0.1",
+    "eslint": "^9.13.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.37.1",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.13",
+    "globals": "^15.11.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.10.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,cjs,mjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css,html,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}

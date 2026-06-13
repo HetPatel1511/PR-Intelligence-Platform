@@ -1,0 +1,123 @@
+// Prisma schema for the PR Intelligence Platform.
+// Models the GitHub entities we sync and derive metrics from.
+// Run `npm run prisma:migrate -w @pr/backend` to create the first migration.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// An authenticated platform user (the person who connected via GitHub OAuth).
+model User {
+  id          String  @id @default(cuid())
+  githubId    BigInt  @unique
+  login       String  @unique
+  name        String?
+  email       String?
+  avatarUrl   String?
+  /// GitHub OAuth access token, stored AES-256-GCM encrypted (never sent to the client).
+  accessToken String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  repositories Repository[]
+}
+
+/// A GitHub repository connected for syncing.
+model Repository {
+  id            String   @id @default(cuid())
+  githubId      BigInt   @unique
+  owner         String
+  name          String
+  fullName      String   @unique // "owner/name"
+  isPrivate     Boolean  @default(false)
+  lastSyncedAt  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  connectedBy   User     @relation(fields: [connectedById], references: [id])
+  connectedById String
+  pullRequests  PullRequest[]
+
+  @@index([connectedById])
+}
+
+/// A GitHub engineer/account referenced by PRs and reviews.
+/// Distinct from `User`: not every author has logged into our platform.
+model Engineer {
+  id        String   @id @default(cuid())
+  githubId  BigInt   @unique
+  login     String   @unique
+  name      String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authoredPrs PullRequest[] @relation("AuthoredPullRequests")
+  reviews     Review[]
+}
+
+enum PullRequestStatus {
+  OPEN
+  CLOSED
+  MERGED
+}
+
+/// A pull request and its raw, syncable facts. Derived metrics are computed
+/// from these fields by the metrics service.
+model PullRequest {
+  id           String            @id @default(cuid())
+  githubId     BigInt            @unique
+  number       Int
+  title        String
+  status       PullRequestStatus
+  additions    Int               @default(0)
+  deletions    Int               @default(0)
+  changedFiles Int               @default(0)
+  commentCount Int               @default(0)
+
+  createdAt    DateTime
+  updatedAt    DateTime
+  mergedAt     DateTime?
+  closedAt     DateTime?
+  firstReviewAt DateTime?
+
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  repositoryId String
+  author       Engineer   @relation("AuthoredPullRequests", fields: [authorId], references: [id])
+  authorId     String
+  reviews      Review[]
+
+  @@unique([repositoryId, number])
+  @@index([repositoryId])
+  @@index([authorId])
+}
+
+enum ReviewState {
+  APPROVED
+  CHANGES_REQUESTED
+  COMMENTED
+  DISMISSED
+  PENDING
+}
+
+/// A review submitted on a pull request.
+model Review {
+  id            String      @id @default(cuid())
+  githubId      BigInt      @unique
+  state         ReviewState
+  submittedAt   DateTime?
+
+  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+  pullRequestId String
+  reviewer      Engineer    @relation(fields: [reviewerId], references: [id])
+  reviewerId    String
+
+  @@index([pullRequestId])
+  @@index([reviewerId])
+}
