@@ -8,6 +8,7 @@ import {
   type ListRepositoriesParams,
 } from '../api/repositories.api';
 import { queryKeys } from '../lib/queryKeys';
+import { recordSync } from '../lib/syncTimestamps';
 
 export function useRepositories(params: ListRepositoriesParams = {}) {
   return useQuery({
@@ -29,7 +30,10 @@ export function useSyncRepositories() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: syncRepositories,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['repositories'] }),
+    onSuccess: () => {
+      recordSync('repositories');
+      queryClient.invalidateQueries({ queryKey: ['repositories'] });
+    },
   });
 }
 

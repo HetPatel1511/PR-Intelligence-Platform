@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useParams } from 'react-router-dom';
 
 import { useRepository, useSyncRepositoryPullRequests } from '../../hooks/useRepositories';
+import { useAutoSync } from '../../hooks/useAutoSync';
 import { getApiErrorMessage } from '../../lib/api';
 import { cn } from '../../utils/cn';
 import { formatDateTime } from '../../utils/format';
@@ -21,6 +22,10 @@ export function RepositoryLayout() {
   const { repositoryId = '' } = useParams();
   const repoQuery = useRepository(repositoryId);
   const sync = useSyncRepositoryPullRequests(repositoryId);
+
+  // Sync this repo's pull requests from GitHub on open, but only if the last
+  // sync was over 5 minutes ago (same action as the Sync button).
+  useAutoSync(sync.mutate, { key: repositoryId, lastSyncedAt: repoQuery.data?.lastSyncedAt });
 
   if (repoQuery.isLoading) return <LoadingState />;
   if (repoQuery.isError || !repoQuery.data) {

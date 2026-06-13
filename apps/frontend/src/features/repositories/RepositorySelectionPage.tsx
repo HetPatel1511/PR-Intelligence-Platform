@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useRepositories, useSyncRepositories } from '../../hooks/useRepositories';
+import { useAutoSync } from '../../hooks/useAutoSync';
 import { getApiErrorMessage } from '../../lib/api';
+import { getLastSync } from '../../lib/syncTimestamps';
 import { formatDateTime } from '../../utils/format';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { EmptyState } from '../../components/feedback/EmptyState';
@@ -29,6 +31,10 @@ export default function RepositorySelectionPage() {
 
   const reposQuery = useRepositories({ page, pageSize: 12, search: search || undefined });
   const sync = useSyncRepositories();
+
+  // Refresh the repository list from GitHub when the page opens, but only if the
+  // last refresh was over 5 minutes ago (same action as the button).
+  useAutoSync(sync.mutate, { lastSyncedAt: getLastSync('repositories') });
 
   return (
     <div>
