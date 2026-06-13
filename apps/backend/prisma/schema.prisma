@@ -58,8 +58,11 @@ model Engineer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  authoredPrs PullRequest[] @relation("AuthoredPullRequests")
-  reviews     Review[]
+  authoredPrs     PullRequest[]   @relation("AuthoredPullRequests")
+  reviews         Review[]
+  reviewComments  ReviewComment[]
+  authoredCommits Commit[]
+  reviewRequests  PullRequest[]   @relation("RequestedReviewers")
 }
 
 enum PullRequestStatus {
@@ -89,9 +92,16 @@ model PullRequest {
 
   repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
   repositoryId String
-  author       Engineer   @relation("AuthoredPullRequests", fields: [authorId], references: [id])
-  authorId     String
-  reviews      Review[]
+  /// Null when GitHub returns no author (e.g. a deleted account).
+  author       Engineer?  @relation("AuthoredPullRequests", fields: [authorId], references: [id])
+  authorId     String?
+
+  reviews            Review[]
+  comments           ReviewComment[]
+  commits            Commit[]
+  files              PullRequestFile[]
+  /// Reviewers GitHub requested but who may not have reviewed yet.
+  requestedReviewers Engineer[]        @relation("RequestedReviewers")
 
   @@unique([repositoryId, number])
   @@index([repositoryId])
@@ -120,4 +130,55 @@ model Review {
 
   @@index([pullRequestId])
   @@index([reviewerId])
+}
+
+/// An inline code-review comment on a pull request.
+model ReviewComment {
+  id        String   @id @default(cuid())
+  githubId  BigInt   @unique
+  body      String?
+  path      String?
+  line      Int?
+  createdAt DateTime
+
+  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+  pullRequestId String
+  author        Engineer    @relation(fields: [authorId], references: [id])
+  authorId      String
+
+  @@index([pullRequestId])
+  @@index([authorId])
+}
+
+/// A commit belonging to a pull request. Keyed by SHA (commits have no numeric id).
+model Commit {
+  id         String    @id @default(cuid())
+  sha        String    @unique
+  message    String
+  authoredAt DateTime?
+
+  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+  pullRequestId String
+  /// Null when GitHub cannot map the commit to an account.
+  author        Engineer?   @relation(fields: [authorId], references: [id])
+  authorId      String?
+
+  @@index([pullRequestId])
+  @@index([authorId])
+}
+
+/// A file changed by a pull request.
+model PullRequestFile {
+  id        String @id @default(cuid())
+  filename  String
+  status    String
+  additions Int    @default(0)
+  deletions Int    @default(0)
+  changes   Int    @default(0)
+
+  pullRequest   PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+  pullRequestId String
+
+  @@unique([pullRequestId, filename])
+  @@index([pullRequestId])
 }
