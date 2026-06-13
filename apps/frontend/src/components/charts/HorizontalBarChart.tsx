@@ -1,10 +1,12 @@
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 import { EmptyState } from '../feedback/EmptyState';
 
 export interface BarDatum {
   name: string;
   value: number;
+  /** Optional per-bar color; falls back to the chart's `color` prop. */
+  color?: string;
 }
 
 interface HorizontalBarChartProps {
@@ -36,7 +38,11 @@ export function HorizontalBarChart({
           tick={{ fontSize: 12, fill: '#475569' }}
         />
         <Tooltip cursor={{ fill: '#f1f5f9' }} />
-        <Bar dataKey="value" fill={color} radius={[0, 4, 4, 0]} barSize={18} />
+        <Bar dataKey="value" fill={color} radius={[0, 4, 4, 0]} barSize={18}>
+          {data.map((datum) => (
+            <Cell key={datum.name} fill={datum.color ?? color} />
+          ))}
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );

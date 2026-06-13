@@ -15,6 +15,7 @@ import { ErrorState } from '../../components/feedback/ErrorState';
 import { LoadingState } from '../../components/feedback/LoadingState';
 import { Avatar } from '../../components/ui/Avatar';
 import { Card, CardHeader } from '../../components/ui/Card';
+import { CodeVolume } from '../../components/ui/CodeVolume';
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { StatCard } from '../../components/ui/StatCard';
 import { StatusBadge } from '../../components/ui/StatusBadge';
@@ -102,7 +103,7 @@ export default function EngineerDetailsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         <StatCard label="PRs Opened" value={formatNumber(metrics?.totalPullRequestsOpened)} />
         <StatCard label="PRs Merged" value={formatNumber(metrics?.pullRequestsMerged)} />
         <StatCard label="Avg Merge Time" value={formatHours(metrics?.averageMergeTimeHours)} />
@@ -112,9 +113,17 @@ export default function EngineerDetailsPage() {
           label="Review Participation"
           value={formatPercent(metrics?.reviewParticipationRate)}
         />
-        <StatCard label="Code Added" value={formatNumber(metrics?.totalCodeAdded)} />
-        <StatCard label="Code Removed" value={formatNumber(metrics?.totalCodeRemoved)} />
       </div>
+
+      <Card>
+        <CardHeader title="Code volume" />
+        <div className="p-5">
+          <CodeVolume
+            additions={metrics?.totalCodeAdded ?? 0}
+            deletions={metrics?.totalCodeRemoved ?? 0}
+          />
+        </div>
+      </Card>
 
       <Card>
         <CardHeader title="Pull requests authored" />

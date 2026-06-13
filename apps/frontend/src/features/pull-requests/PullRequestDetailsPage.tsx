@@ -12,7 +12,9 @@ import {
 import { ErrorState } from '../../components/feedback/ErrorState';
 import { LoadingState } from '../../components/feedback/LoadingState';
 import { Card, CardHeader } from '../../components/ui/Card';
+import { CodeVolume } from '../../components/ui/CodeVolume';
 import { DataTable, type Column } from '../../components/ui/DataTable';
+import { FileStatusBadge } from '../../components/ui/FileStatusBadge';
 import { PersonInline } from '../../components/ui/PersonInline';
 import { StatCard } from '../../components/ui/StatCard';
 import { StatusBadge } from '../../components/ui/StatusBadge';
@@ -32,7 +34,7 @@ export default function PullRequestDetailsPage() {
       header: 'File',
       render: (file) => <span className="font-mono text-xs text-slate-700">{file.filename}</span>,
     },
-    { key: 'status', header: 'Status', className: 'text-slate-500', render: (file) => file.status },
+    { key: 'status', header: 'Status', render: (file) => <FileStatusBadge status={file.status} /> },
     {
       key: 'changes',
       header: 'Changes',
@@ -61,7 +63,16 @@ export default function PullRequestDetailsPage() {
         <p className="mt-1 text-sm text-slate-500">
           #{pr.number} · opened {formatDateTime(pr.createdAt)}
           {pr.mergedAt ? ` · merged ${formatDateTime(pr.mergedAt)}` : ''} · by{' '}
-          {pr.author ? displayName(pr.author) : 'unknown'}
+          {pr.author ? (
+            <Link
+              to={`/repositories/${repositoryId}/engineers/${pr.author.id}`}
+              className="font-medium text-indigo-600 hover:text-indigo-700"
+            >
+              {displayName(pr.author)}
+            </Link>
+          ) : (
+            'unknown'
+          )}
         </p>
       </div>
 
@@ -76,15 +87,21 @@ export default function PullRequestDetailsPage() {
         <StatCard label="Comments" value={formatNumber(metrics.commentCount)} />
         <StatCard label="Files Changed" value={formatNumber(metrics.filesChanged)} />
         <StatCard
-          label="Code Churn"
-          value={formatNumber(metrics.codeChurn)}
-          hint={`+${formatNumber(metrics.linesAdded)} / −${formatNumber(metrics.linesDeleted)}`}
-        />
-        <StatCard
           label="Review Participation"
           value={formatPercent(metrics.reviewParticipationRate)}
         />
       </div>
+
+      <Card>
+        <CardHeader title="Code changes" />
+        <div className="p-5">
+          <CodeVolume
+            additions={metrics.linesAdded}
+            deletions={metrics.linesDeleted}
+            churn={metrics.codeChurn}
+          />
+        </div>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
