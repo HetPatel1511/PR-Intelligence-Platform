@@ -5,6 +5,34 @@ quality metrics, and surfaces insights per PR and per engineer.
 
 This repository is an **npm-workspaces monorepo**.
 
+## Tech Stack
+
+**Frontend**
+
+- React + TypeScript
+- Vite (build tool / dev server)
+- React Router (routing)
+- TanStack Query (server-state & caching)
+- Axios (HTTP client)
+- Tailwind CSS (styling)
+- Recharts (charts/visualizations)
+
+**Backend**
+
+- Express + TypeScript
+- GitHub OAuth + JWT
+- PostgreSQL
+- Prisma ORM
+- Zod (request validation)
+- Axios (GitHub REST client)
+
+**Tooling**
+
+- npm workspaces (monorepo)
+- ESLint + Prettier
+- Husky + lint-staged
+- tsx (TypeScript execution / watch)
+
 ## Structure
 
 ```
